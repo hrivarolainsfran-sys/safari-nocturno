@@ -186,16 +186,16 @@ footer{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-to
 const DRIVE_URL = "https://script.google.com/macros/s/AKfycbzz9QCEv-1ZT4uUa6xOroryhYL3kDY5rYbSrCcFvVso9BirsUbV0b6TteQuiLjca2jE/exec";
 
 const CONSIGNAS = [
-  {t:"Sombra de animal en movimiento", d:"Con linternas y las manos, hagan la sombra de un animal haciendo algo (comiendo, volando, peleando). Tiene que adivinarse sin explicar.", x:"Dos animales distintos en la misma sombra."},
-  {t:"Estatua de su elemento", d:"Todo el equipo, quieto como estatua, representa su elemento con el cuerpo: Fuego con llamas que suben, Agua con una ola, Tierra con una montaña o volcán. Ilumínense con linternas desde abajo.", x:"Que alguien de otro equipo adivine qué elemento es sin que se lo digan."},
-  {t:"Bicho nocturno de cerca", d:"Un insecto u otro bicho, nítido y de cerca, en el que se vean las patas o las antenas. ¡Sin tocarlo ni moverlo!", x:""},
-  {t:"Árbol con cara", d:"Encuentren un árbol que parezca tener cara y complétenla con linternas, hojas o ramitas (sin arrancar nada vivo). Un integrante al lado imita la misma cara.", x:""},
-  {t:"Tres luces de colores", d:"En una sola foto, tres fuentes de luz distintas y de tres colores diferentes.", x:""},
-  {t:"Escribir con luz", d:"Escriban FUEGO, AGUA o TIERRA con linternas, usando el modo noche o larga exposición de la cámara.", x:"Que se lea completo, sin letras al revés."},
-  {t:"Grito congelado", d:"Todo el equipo gritando, con los pies en el aire al mismo tiempo.", x:"Que nadie tenga los ojos cerrados."},
-  {t:"Rastro de un animal", d:"Una huella, nido, pluma o cáscara de verdad, con un objeto al lado para mostrar el tamaño.", x:"Escriban con ramitas o piedritas de qué animal es."},
-  {t:"Reflejo nocturno", d:"El equipo reflejado en algo (un charco, una ventana, un balde con agua, un vidrio), iluminado con una linterna.", x:"Que se vean todos los integrantes en el reflejo."},
-  {t:"Pirámide con elemento", d:"Una pirámide humana sosteniendo algo de su elemento: rojo o caliente para Fuego, agua para Agua, planta o piedra para Tierra.", x:"Por lo menos cuatro personas en la base."}
+  {"t": "Sombra de animal en movimiento", "d": "Con linternas y las manos, hagan la sombra de dos animales distintos haciendo algo (comiendo, volando, peleando). Tiene que adivinarse sin explicar."},
+  {"t": "Estatua de su elemento", "d": "Todo el equipo, quieto como estatua, representa su elemento con el cuerpo: Fuego con llamas que suben, Agua con una ola, Tierra con una montaña o volcán. Ilumínense con linternas desde abajo. Alguien de otro equipo tiene que adivinar qué elemento es sin que se lo digan."},
+  {"t": "Bicho nocturno de cerca", "d": "Un insecto u otro bicho, nítido y de cerca, en el que se vean las patas o las antenas. ¡Sin tocarlo ni moverlo!"},
+  {"t": "Árbol con cara", "d": "Encuentren un árbol que parezca tener cara y complétenla con linternas, hojas o ramitas (sin arrancar nada vivo). Un integrante al lado imita la misma cara."},
+  {"t": "Tres luces de colores", "d": "En una sola foto, tres fuentes de luz distintas y de tres colores diferentes."},
+  {"t": "Escribir con luz", "d": "Escriban FUEGO, AGUA o TIERRA con linternas, usando el modo noche o larga exposición de la cámara. Tiene que leerse completo, sin letras al revés."},
+  {"t": "Grito congelado", "d": "Todo el equipo gritando, con los pies en el aire al mismo tiempo y nadie con los ojos cerrados."},
+  {"t": "Rastro de un animal", "d": "Una huella, nido, pluma o cáscara de verdad, con un objeto al lado para mostrar el tamaño. Al lado escriban con ramitas o piedritas de qué animal es."},
+  {"t": "Reflejo nocturno", "d": "El equipo reflejado en algo (un charco, una ventana, un balde con agua, un vidrio), iluminado con una linterna. Se tienen que ver todos los integrantes en el reflejo."},
+  {"t": "Pirámide con elemento", "d": "Una pirámide humana, con por lo menos cuatro personas en la base, sosteniendo algo de su elemento: rojo o caliente para Fuego, agua para Agua, planta o piedra para Tierra."}
 ];
 const N = CONSIGNAS.length;
 const IN_CLAUDE = !!window.claude;              // dentro de claude.ai no se puede enviar a Drive
