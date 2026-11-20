@@ -46,6 +46,15 @@ button:disabled{opacity:.6;cursor:default}
 .team{display:flex;gap:10px;flex-wrap:wrap}
 .team label{flex:1 1 200px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .team input{background:var(--panel);border:1px solid var(--line);color:var(--moon);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box}
+.teams{flex:1 1 100%;display:flex;flex-direction:column;gap:6px;min-width:0}
+.teamBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tb{--c:var(--line);background:var(--panel);border:2px solid var(--line);color:var(--moon);border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.tb i{font-style:normal;font-size:1.5rem;line-height:1}
+.tb b{font-family:var(--display);font-weight:400;font-size:1.25rem;letter-spacing:.04em;line-height:1}
+.tb small{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.tb[data-t="Rojo (Fuego)"]{--c:#e2523c}.tb[data-t="Azul (Agua)"]{--c:#4a9be8}.tb[data-t="Amarillo (Tierra)"]{--c:#e9c84c}
+.tb[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,var(--panel))}
+.tb[aria-pressed="true"] b{color:var(--c)}
 
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -108,10 +117,14 @@ footer{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-to
   </header>
 
   <div class="team">
-    <label for="teamName"><span class="eyebrow">Nombre del equipo</span>
-      <input id="teamName" placeholder="Ej: Los Búhos" maxlength="30" autocomplete="off"></label>
+    <div class="teams" role="group" aria-labelledby="teamLbl"><span class="eyebrow" id="teamLbl">Elijan su equipo</span>
+      <div class="teamBtns" id="teamBtns">
+        <button type="button" class="tb" data-t="Rojo (Fuego)" aria-pressed="false"><i>🔥</i><b>Rojo</b><small>Fuego</small></button>
+        <button type="button" class="tb" data-t="Azul (Agua)" aria-pressed="false"><i>💧</i><b>Azul</b><small>Agua</small></button>
+        <button type="button" class="tb" data-t="Amarillo (Tierra)" aria-pressed="false"><i>🌱</i><b>Amarillo</b><small>Tierra</small></button>
+      </div></div>
     <label for="campKey" id="keyLabel" hidden><span class="eyebrow">Clave del campamento</span>
-      <input id="campKey" placeholder="La dan los monitores" maxlength="30" autocomplete="off" autocapitalize="characters"></label>
+      <input id="campKey" placeholder="Ej: SAFARI" maxlength="30" autocomplete="off" autocapitalize="characters"></label>
   </div>
 
   <div class="stats">
@@ -252,7 +265,7 @@ function renderSync(){
   const box=$("syncBox"),msg=$("syncMsg"),btn=$("syncBtn");
   const pend=Object.keys(state.photos).filter(i=>state.up[i]!=="ok").length;
   box.classList.remove("warn");btn.hidden=true;
-  if(!state.team.trim()||!state.key.trim()){box.hidden=false;box.classList.add("warn");msg.textContent="Escriban el nombre del equipo y la clave del campamento para que las fotos se envíen al Drive.";return}
+  if(!state.team.trim()||!state.key.trim()){box.hidden=false;box.classList.add("warn");msg.textContent=!state.team.trim()?"Elijan su equipo arriba para que las fotos se envíen al Drive.":"Escriban la clave del campamento para que las fotos se envíen al Drive.";return}
   if(lastErr&&pend){box.hidden=false;box.classList.add("warn");msg.textContent=ERR[lastErr]||ERR.servidor;btn.hidden=sending;return}
   if(sending){box.hidden=false;msg.textContent="Enviando fotos al Drive…";return}
   if(pend){box.hidden=false;msg.textContent=pend+" foto(s) por enviar.";btn.hidden=false;return}
@@ -284,13 +297,17 @@ function toast(t,bad){const el=$("toast");el.textContent=t;el.classList.toggle("
 
 /* ---------- equipo y clave ---------- */
 let typing;
-$("teamName").oninput=e=>{state.team=e.target.value;save();renderSync();clearTimeout(typing);typing=setTimeout(sendPending,1200)};
+function showTeam(){document.querySelectorAll(".tb").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===state.team))}
+document.querySelectorAll(".tb").forEach(b=>b.onclick=()=>{if(state.team&&state.team!==b.dataset.t&&Object.keys(state.photos).length){
+    // cambiar de equipo con fotos ya enviadas: las pendientes van al equipo nuevo
+    for(const k in state.up)delete state.up[k];}
+  state.team=b.dataset.t;save();showTeam();render();sendPending()});
 $("campKey").oninput=e=>{state.key=e.target.value;lastErr="";save();renderSync();clearTimeout(typing);typing=setTimeout(sendPending,1200)};
 
 /* ---------- reiniciar ---------- */
 $("resetBtn").onclick=()=>{$("confirmBg").hidden=false;$("cfNo").focus()};
 $("cfNo").onclick=()=>$("confirmBg").hidden=true;
-$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=state.key;state={team:"",key,photos:{},up:{}};lastErr="";$("teamName").value="";save();$("confirmBg").hidden=true;render();toast("Juego reiniciado")};
+$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=state.key;state={team:"",key,photos:{},up:{}};lastErr="";showTeam();save();$("confirmBg").hidden=true;render();toast("Juego reiniciado")};
 
 /* ---------- descarga de la app (sólo dentro de Claude) ---------- */
 (async()=>{
@@ -326,7 +343,8 @@ if(CLOUD){$("keyLabel").hidden=false;$("cloudStat").hidden=false;$("footNote").t
 (async()=>{render();idb=await openDB();const s=await get("state");
   if(s){state.team=s.team||"";state.key=s.key||"";state.up=s.up||{};
     for(const i of (s.ids||[])){const d=await get("photo"+i);if(d)state.photos[i]=d}
-    $("teamName").value=state.team;$("campKey").value=state.key}
+    if(!document.querySelector(`.tb[data-t="${state.team}"]`))state.team="";
+    showTeam();$("campKey").value=state.key}
   render();sendPending()})();
 </script>
 <div class="sheet-bg" id="instBg" hidden>
