@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Safari">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<title>Safari Nocturno</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Staatliches&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: una sola columna tipo app de bolsillo; tarjetas-consigna en lista, hoja inferior para la foto. Diseño nocturno único (siempre oscuro, se lee con poca luz). */
+:root{
+  --night:#0d1714; --panel:#15241f; --panel2:#1c2f28; --line:#2a4339;
+  --moon:#f1e8c8; --muted:#9db3a7; --firefly:#e9d54c; --leaf:#5fbf86; --ember:#e2713c;
+  --display:"Staatliches", "Impact", "Arial Narrow", sans-serif;
+  --body:"Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--night);color:var(--moon)}
+body{font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px;
+  background:radial-gradient(1200px 500px at 80% -10%, #1d3a31 0%, transparent 60%), var(--night);min-height:100%}
+#sky{position:fixed;inset:0;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:22px}
+h1{font-family:var(--display);font-weight:400;font-size:2.6rem;line-height:.9;margin:0;letter-spacing:.02em;text-wrap:balance}
+h1 span{color:var(--firefly)}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+h2{font-family:var(--display);font-weight:400;font-size:1.6rem;margin:0;letter-spacing:.03em}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--firefly);outline-offset:2px}
+
+.team{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.team label{flex:1 1 200px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.team input{background:var(--panel);border:1px solid var(--line);color:var(--moon);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--display);font-weight:400;font-size:1.8rem;line-height:1;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.stat.timer b{color:var(--firefly)}
+.stat.timer.late b{color:var(--ember)}
+.timerbtns{display:flex;gap:6px;margin-top:6px}
+.chip{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:3px 10px;font-size:.78rem;font-weight:700}
+.chip.on{border-color:var(--firefly);color:var(--firefly)}
+
+.bar{height:8px;background:var(--panel);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--leaf),var(--firefly));width:0;transition:width .4s}
+
+.tabs{display:flex;gap:6px;background:var(--panel);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.tabs button{flex:1;background:transparent;border:0;color:var(--muted);padding:9px;border-radius:9px;font-weight:800}
+.tabs button[aria-selected="true"]{background:var(--panel2);color:var(--moon)}
+
+.list{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
+.card{display:grid;grid-template-columns:44px 1fr 64px;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;color:inherit;width:100%}
+.card .n{font-family:var(--display);font-size:1.7rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.card .t{min-width:0;display:flex;flex-direction:column;gap:2px}
+.card .t strong{font-size:1rem;line-height:1.25}
+.card .t span{font-size:.82rem;color:var(--muted)}
+.card .pts{font-size:.72rem;font-weight:800;color:var(--firefly);letter-spacing:.06em;text-transform:uppercase}
+.thumb{width:64px;height:64px;border-radius:10px;background:var(--panel2);border:1px dashed var(--line);display:grid;place-items:center;overflow:hidden;color:var(--muted)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.card.done{border-color:color-mix(in srgb,var(--leaf) 55%,var(--line))}
+.card.done .n{color:var(--leaf)}
+.card.done .thumb{border-style:solid;border-color:var(--leaf)}
+.card.bad{border-color:var(--ember)}
+
+/* hoja inferior */
+.sheet-bg{position:fixed;inset:0;background:rgba(3,8,6,.72);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:92%;overflow:auto;
+  padding:20px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+.sheet p{margin:0;color:var(--muted)}
+.preview{width:100%;aspect-ratio:4/3;max-width:100%;border-radius:14px;background:var(--panel2);border:1px dashed var(--line);display:grid;place-items:center;overflow:hidden;color:var(--muted);text-align:center;padding:10px;box-sizing:border-box}
+.preview img{width:100%;height:100%;object-fit:contain}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{flex:1 1 140px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:1rem}
+.btn.main{background:var(--firefly);color:#1a1a08}
+.btn.ghost{background:var(--panel2);color:var(--moon);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--ember);border:1px solid var(--ember)}
+.tip{font-size:.85rem;background:var(--panel2);border-radius:10px;padding:10px 12px;color:var(--moon)}
+.tip b{color:var(--firefly)}
+
+/* revisión */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.rev{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.rev .ph{aspect-ratio:1;background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:.85rem;text-align:center;padding:8px;box-sizing:border-box}
+.rev .ph img{width:100%;height:100%;object-fit:cover}
+.rev .ph:has(img){padding:0}
+.rev .cap{padding:8px 10px;font-size:.82rem;display:flex;flex-direction:column;gap:6px}
+.rev .ok{display:flex;gap:6px}
+.rev .ok button{flex:1;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);padding:6px;font-weight:800;font-size:.8rem}
+.rev .ok button.yes[aria-pressed="true"]{background:var(--leaf);color:#06140c;border-color:var(--leaf)}
+.rev .ok button.no[aria-pressed="true"]{background:var(--ember);color:#1c0a02;border-color:var(--ember)}
+.score{background:var(--panel2);border:1px solid var(--firefly);border-radius:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.score b{font-family:var(--display);font-weight:400;font-size:2.4rem;color:var(--firefly);line-height:1;font-variant-numeric:tabular-nums}
+footer{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-top:8px}
+.note{font-size:.8rem;color:var(--muted);text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--leaf);color:#06140c;font-weight:800;padding:10px 16px;border-radius:99px;z-index:30}
+@media (max-width:380px){.card{grid-template-columns:34px 1fr 56px}.thumb{width:56px;height:56px}h1{font-size:2.2rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Juego nocturno · Campamento</div>
+      <h1>Safari<br><span>Nocturno</span></h1>
+    </div>
+  </header>
+
+  <div class="team">
+    <label for="teamName"><span class="eyebrow">Nombre del equipo</span>
+      <input id="teamName" placeholder="Ej: Los Búhos" maxlength="30" autocomplete="off"></label>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><small>Fotos</small><b id="sDone">0/10</b></div>
+    <div class="stat"><small>Puntos</small><b id="sPts">0</b></div>
+    <div class="stat timer" id="timerBox"><small>Tiempo</small><b id="sTime">45:00</b>
+      <div class="timerbtns"><button class="chip" id="timerBtn">Arrancar</button></div></div>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tabHunt" aria-selected="true">Consignas</button>
+    <button role="tab" id="tabRev" aria-selected="false">Revisión</button>
+  </div>
+
+  <ul class="list" id="list"></ul>
+  <section id="review" hidden style="display:flex;flex-direction:column;gap:12px">
+    <p class="note" style="text-align:left">Para el monitor: marcá cada foto como válida o no. Sólo suman las válidas (+ bonus si corresponde).</p>
+    <div class="score"><div><div class="eyebrow">Puntaje final</div><div id="revTeam" style="font-weight:800"></div></div><b id="revPts">0</b></div>
+    <div class="grid" id="revGrid"></div>
+  </section>
+
+  <footer>
+    <div class="tip" id="dlBox" hidden>
+      <b>Descargar la app</b><br>
+      Bajá Safari Nocturno como archivo para usarlo sin internet: se abre con el navegador y funciona igual, con cámara, reloj y puntaje.
+      <div class="row" style="margin-top:10px"><button class="btn main" id="dlBtn">⬇️ Descargar app</button></div>
+      <div id="dlMsg" style="margin-top:8px;color:var(--muted);font-size:.8rem" hidden></div>
+    </div>
+    <button class="btn danger" id="resetBtn">Empezar de nuevo</button>
+    <p class="note">Las fotos quedan guardadas en este celular. Usen un celular por equipo.</p>
+  </footer>
+</div>
+
+<div class="sheet-bg" id="sheetBg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+    <div class="eyebrow" id="shNum"></div>
+    <h2 id="shTitle"></h2>
+    <p id="shDesc"></p>
+    <div class="tip" id="shBonus"></div>
+    <div class="preview" id="shPrev">Todavía no hay foto</div>
+    <p style="font-size:.82rem">“Abrir cámara” abre la cámara del celular: sacan la foto, tocan “Usar foto” y queda cargada acá. “Cargar foto” sube una que ya tengan en la galería.</p>
+    <input type="file" id="cam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="gal" accept="image/*" hidden>
+    <div class="row">
+      <button class="btn main" id="shShoot">📷 Abrir cámara</button>
+      <button class="btn ghost" id="shPick">⬆️ Cargar foto</button>
+    </div>
+    <div class="row">
+      <button class="btn danger" id="shDel" hidden>Borrar foto</button>
+      <button class="btn ghost" id="shClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-bg" id="confirmBg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cfTitle">
+    <h2 id="cfTitle">¿Empezar de nuevo?</h2>
+    <p>Se borran todas las fotos, el nombre del equipo y el reloj de este celular. No se puede deshacer.</p>
+    <div class="row">
+      <button class="btn danger" id="cfYes">Sí, borrar todo</button>
+      <button class="btn ghost" id="cfNo">Cancelar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const CONSIGNAS = [
+  {t:"Sombra de animal", d:"Con una linterna y las manos, hagan la sombra de un animal sobre una carpa o pared.", p:10, b:"Bonus +5: que sea un animal de safari (león, elefante, jirafa…)."},
+  {t:"Foto con el Largo", d:"Encuentren al Largo y sáquense una foto con él, con todo el equipo.", p:15, b:"Bonus +5: que estén todos y se vean bien las caras."},
+  {t:"Bicho nocturno", d:"Encuentren un insecto de noche: polilla, grillo, bicho de luz… ¡sin tocarlo!", p:15, b:"Bonus +5: que esté cerca de una luz o linterna."},
+  {t:"Árbol monstruo", d:"Un árbol o rama que, con la linterna, parezca un monstruo.", p:10, b:"Bonus +5: un integrante haciendo cara de miedo al lado."},
+  {t:"Algo que brille", d:"Algo que brille o refleje la luz: un ojo de gato, un cartel, agua, metal.", p:10, b:"Bonus +5: que sea algo natural (agua, ojos de animal, rocío)."},
+  {t:"Escribir con luz", d:"Muevan una linterna frente a la cámara y dibujen una figura (corazón, estrella, letra).", p:15, b:"Bonus +5: que se lea la inicial del equipo."},
+  {t:"Grito de equipo", d:"Todo el equipo en una foto haciendo su mejor cara de susto.", p:10, b:"Bonus +5: que estén todos y nadie con los ojos cerrados."},
+  {t:"Huella misteriosa", d:"Una huella en la tierra o el barro (de animal o de zapatilla).", p:10, b:"Bonus +5: que sea de un animal de verdad."},
+  {t:"El fogón", d:"La luz del fogón o de una fogata del campamento, siempre desde lejos y con un monitor cerca.", p:10, b:"Bonus +5: que se vean siluetas de personas recortadas contra el fuego."},
+  {t:"Pirámide humana", d:"El equipo formando una figura o letra con el cuerpo, iluminados con linternas.", p:20, b:"Bonus +10: que la figura sea un animal reconocible."}
+];
+const N = CONSIGNAS.length;
+const TIMES = [30,45,60];
+let state = {team:"", photos:{}, verdict:{}, bonus:{}, timerMin:45, timerStart:null};
+let current = null;
+const $ = id => document.getElementById(id);
+
+/* ---------- almacenamiento (IndexedDB para fotos, con respaldo en memoria) ---------- */
+let idb = null;
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open("safari-nocturno",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}catch(e){res(null)}})}
+function put(k,v){if(!idb)return;try{idb.transaction("kv","readwrite").objectStore("kv").put(v,k)}catch(e){}}
+function get(k){return new Promise(res=>{if(!idb)return res(undefined);try{const r=idb.transaction("kv").objectStore("kv").get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(undefined)}catch(e){res(undefined)}})}
+function save(){put("state",{team:state.team,verdict:state.verdict,bonus:state.bonus,timerMin:state.timerMin,timerStart:state.timerStart,ids:Object.keys(state.photos)})}
+
+/* ---------- foto: achicar a ~1280px JPEG ---------- */
+function shrink(file){return new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const max=1280;let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.82))};img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
+
+/* ---------- puntos ---------- */
+function points(){let p=0;for(let i=0;i<N;i++){if(!state.photos[i])continue;if(state.verdict[i]==="no")continue;p+=CONSIGNAS[i].p;if(state.bonus[i])p+=bonusVal(i)}return p}
+function bonusVal(i){const m=CONSIGNAS[i].b.match(/\+(\d+)/);return m?+m[1]:0}
+
+/* ---------- render ---------- */
+function render(){
+  const done=Object.keys(state.photos).length;
+  $("sDone").textContent=done+"/"+N;
+  $("sPts").textContent=points();
+  $("barFill").style.width=(done/N*100)+"%";
+  const ul=$("list");ul.innerHTML="";
+  CONSIGNAS.forEach((c,i)=>{
+    const li=document.createElement("li");
+    const b=document.createElement("button");
+    b.className="card"+(state.photos[i]?" done":"")+(state.verdict[i]==="no"?" bad":"");
+    b.innerHTML=`<div class="n">${String(i+1).padStart(2,"0")}</div><div class="t"><strong></strong><span></span><div class="pts">${c.p} pts${state.photos[i]?" · ✓ lista":""}</div></div><div class="thumb">${state.photos[i]?'<img alt="">':"📷"}</div>`;
+    b.querySelector("strong").textContent=c.t;
+    b.querySelector(".t span").textContent=c.d;
+    if(state.photos[i])b.querySelector("img").src=state.photos[i];
+    b.onclick=()=>openSheet(i);
+    li.appendChild(b);ul.appendChild(li);
+  });
+  renderReview();
+}
+function renderReview(){
+  $("revPts").textContent=points();
+  $("revTeam").textContent=state.team||"Equipo sin nombre";
+  const g=$("revGrid");g.innerHTML="";
+  CONSIGNAS.forEach((c,i)=>{
+    const d=document.createElement("div");d.className="rev";
+    const has=!!state.photos[i];
+    d.innerHTML=`<div class="ph">${has?'<img alt="">':"Sin foto"}</div><div class="cap"><strong></strong>${has?`<div class="ok"><button class="yes">Válida</button><button class="no">No vale</button></div><div class="ok"><button class="yes bon">Bonus +${bonusVal(i)}</button></div>`:""}</div>`;
+    d.querySelector("strong").textContent=(i+1)+". "+c.t;
+    if(has){
+      d.querySelector("img").src=state.photos[i];
+      const [y,n]=d.querySelectorAll(".ok")[0].querySelectorAll("button");const bon=d.querySelector(".bon");
+      y.setAttribute("aria-pressed",state.verdict[i]!=="no");n.setAttribute("aria-pressed",state.verdict[i]==="no");
+      bon.setAttribute("aria-pressed",!!state.bonus[i]);
+      y.onclick=()=>{state.verdict[i]="ok";save();render()};
+      n.onclick=()=>{state.verdict[i]="no";state.bonus[i]=false;save();render()};
+      bon.onclick=()=>{if(state.verdict[i]==="no")return;state.bonus[i]=!state.bonus[i];save();render()};
+    }
+    g.appendChild(d);
+  });
+}
+
+/* ---------- hoja de consigna ---------- */
+function openSheet(i){current=i;const c=CONSIGNAS[i];
+  $("shNum").textContent=`Consigna ${i+1} de ${N} · ${c.p} puntos`;
+  $("shTitle").textContent=c.t;$("shDesc").textContent=c.d;
+  $("shBonus").innerHTML="";const b=document.createElement("b");b.textContent="Bonus ";$("shBonus").append(b,c.b.replace(/^Bonus\s*/,""));
+  showPrev();$("sheetBg").hidden=false;$("shShoot").focus()}
+function showPrev(){const p=$("shPrev");const src=state.photos[current];p.innerHTML=src?'<img alt="Foto de la consigna">':"Todavía no hay foto";if(src)p.querySelector("img").src=src;$("shDel").hidden=!src;$("shShoot").textContent=src?"📷 Sacar otra":"📷 Abrir cámara"}
+function closeSheet(){$("sheetBg").hidden=true;current=null}
+async function onFile(e){const f=e.target.files&&e.target.files[0];e.target.value="";if(!f||current===null)return;
+  $("shPrev").textContent="Guardando…";
+  try{const data=await shrink(f);state.photos[current]=data;delete state.verdict[current];put("photo"+current,data);save();showPrev();render();toast("¡Foto guardada!")}
+  catch(err){$("shPrev").textContent="No se pudo leer la foto. Probá de nuevo o elegila de la galería."}}
+$("cam").onchange=onFile;$("gal").onchange=onFile;
+$("shShoot").onclick=()=>$("cam").click();
+$("shPick").onclick=()=>$("gal").click();
+$("shDel").onclick=()=>{delete state.photos[current];delete state.verdict[current];delete state.bonus[current];put("photo"+current,undefined);save();showPrev();render()};
+$("shClose").onclick=closeSheet;
+$("sheetBg").onclick=e=>{if(e.target.id==="sheetBg")closeSheet()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSheet();$("confirmBg").hidden=true}});
+
+function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,1600)}
+
+/* ---------- pestañas ---------- */
+function tab(rev){$("tabHunt").setAttribute("aria-selected",!rev);$("tabRev").setAttribute("aria-selected",rev);$("list").hidden=rev;$("review").hidden=!rev}
+$("tabHunt").onclick=()=>tab(false);$("tabRev").onclick=()=>tab(true);
+
+/* ---------- equipo ---------- */
+$("teamName").oninput=e=>{state.team=e.target.value;save();renderReview()};
+
+/* ---------- reloj ---------- */
+function fmt(s){s=Math.max(0,s);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(Math.floor(s%60)).padStart(2,"0")}
+function tick(){const total=state.timerMin*60;let left=total;
+  if(state.timerStart)left=total-(Date.now()-state.timerStart)/1000;
+  $("sTime").textContent=left<=0?"¡Fin!":fmt(left);
+  $("timerBox").classList.toggle("late",!!state.timerStart&&left<300);
+  $("timerBtn").textContent=state.timerStart?"Reiniciar":"Arrancar";
+  document.querySelectorAll(".tmin").forEach(b=>b.classList.toggle("on",+b.dataset.m===state.timerMin));}
+TIMES.forEach(m=>{const b=document.createElement("button");b.className="chip tmin";b.dataset.m=m;b.textContent=m+"′";b.onclick=()=>{state.timerMin=m;save();tick()};$("timerBtn").parentNode.appendChild(b)});
+$("timerBtn").onclick=()=>{state.timerStart=state.timerStart?null:Date.now();save();tick();if(state.timerStart)toast("¡A cazar fotos!")};
+setInterval(tick,1000);
+
+/* ---------- reiniciar ---------- */
+$("resetBtn").onclick=()=>{$("confirmBg").hidden=false;$("cfNo").focus()};
+$("cfNo").onclick=()=>$("confirmBg").hidden=true;
+$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);state={team:"",photos:{},verdict:{},bonus:{},timerMin:45,timerStart:null};$("teamName").value="";save();$("confirmBg").hidden=true;render();tick();toast("Juego reiniciado")};
+
+/* ---------- cielo con luciérnagas ---------- */
+(function(){const c=$("sky"),x=c.getContext("2d");let W,H,stars=[],flies=[];
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size(){W=c.width=innerWidth;H=c.height=innerHeight;stars=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H*.5,r:Math.random()*1.2+.2}));flies=Array.from({length:14},()=>({x:Math.random()*W,y:H*.4+Math.random()*H*.6,a:Math.random()*6,s:Math.random()*.5+.2}))}
+  function draw(t){x.clearRect(0,0,W,H);x.fillStyle="#f1e8c8";stars.forEach(s=>{x.globalAlpha=.35+.3*Math.sin(t/900+s.x);x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()});
+    flies.forEach(f=>{f.a+=.01;f.x+=Math.cos(f.a)*f.s;f.y+=Math.sin(f.a*1.3)*f.s*.6;if(f.x<0)f.x=W;if(f.x>W)f.x=0;const g=.5+.5*Math.sin(t/400+f.a*3);x.globalAlpha=g*.8;x.fillStyle="#e9d54c";x.beginPath();x.arc(f.x,f.y,2,0,7);x.fill();x.globalAlpha=g*.15;x.beginPath();x.arc(f.x,f.y,9,0,7);x.fill()});
+    x.globalAlpha=1;if(!reduce)requestAnimationFrame(draw)}
+  size();addEventListener("resize",size);requestAnimationFrame(draw)})();
+
+/* ---------- descarga de la app (sólo dentro de Claude) ---------- */
+(async()=>{
+  if(!window.claude||!window.claude.use)return;
+  let dl=null;try{dl=await window.claude.use("downloads")}catch(e){}
+  if(!dl)return;
+  $("dlBox").hidden=false;
+  const msg=t=>{$("dlMsg").textContent=t;$("dlMsg").hidden=false};
+  $("dlBtn").onclick=async()=>{
+    $("dlBtn").disabled=true;
+    try{
+      const r=await fetch("safari-nocturno-app.html");if(!r.ok)throw {code:"fetch"};
+      const blob=await r.blob();
+      await dl.save({filename:"Safari Nocturno.html",data:blob});
+      msg("Listo. Abrí el archivo “Safari Nocturno.html” con Chrome o Safari para jugar.");
+    }catch(e){
+      const c=e&&e.code;
+      msg(c==="declined"?"Descarga cancelada.":c==="rate_limited"?"Ya hay una descarga esperando confirmación.":c==="fetch"?"No se pudo preparar el archivo. Revisá la conexión y probá de nuevo.":"La descarga no está disponible en esta vista.");
+    }finally{$("dlBtn").disabled=false}
+  };
+})();
+
+/* ---------- arranque ---------- */
+(async()=>{render();tick();idb=await openDB();const s=await get("state");
+  if(s){state.team=s.team||"";state.verdict=s.verdict||{};state.bonus=s.bonus||{};state.timerMin=s.timerMin||45;state.timerStart=s.timerStart||null;
+    for(const i of (s.ids||[])){const d=await get("photo"+i);if(d)state.photos[i]=d}
+    $("teamName").value=state.team}
+  render();tick()})();
+</script>
+<div class="sheet-bg" id="instBg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="instTitle">
+    <h2 id="instTitle">Instalar Safari Nocturno</h2>
+    <p id="instText"></p>
+    <div class="row"><button class="btn main" id="instGo" hidden>Instalar</button><button class="btn ghost" id="instClose">Cerrar</button></div>
+  </div>
+</div>
+<script>
+(function(){
+  if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (standalone) return;
+  const foot = document.querySelector("footer");
+  const box = document.createElement("div"); box.className = "tip";
+  box.innerHTML = '<b>Instalá la app</b><br>Queda como ícono en el celular y funciona sin señal.<div class="row" style="margin-top:10px"><button class="btn main" id="instBtn">📲 Instalar app</button></div>';
+  foot.prepend(box);
+  let deferred = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; });
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const $ = id => document.getElementById(id);
+  $("instBtn").onclick = () => {
+    if (deferred) { deferred.prompt(); deferred.userChoice.finally(() => deferred = null); return; }
+    $("instText").textContent = ios
+      ? "En iPhone: abrí esta página en Safari, tocá el botón Compartir (el cuadrado con la flecha hacia arriba) y elegí “Agregar a pantalla de inicio”."
+      : "En Android: tocá el menú ⋮ de Chrome y elegí “Instalar app” o “Agregar a pantalla principal”.";
+    $("instBg").hidden = false;
+  };
+  $("instClose").onclick = () => $("instBg").hidden = true;
+  addEventListener("appinstalled", () => box.remove());
+})();
+</script>
+
+</body>
+</html>
