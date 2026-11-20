@@ -186,16 +186,16 @@ footer{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-to
 const DRIVE_URL = "https://script.google.com/macros/s/AKfycbzz9QCEv-1ZT4uUa6xOroryhYL3kDY5rYbSrCcFvVso9BirsUbV0b6TteQuiLjca2jE/exec";
 
 const CONSIGNAS = [
-  {t:"Sombra de animal", d:"Con una linterna y las manos, hagan la sombra de un animal sobre una carpa o pared.", x:"Que sea un animal de safari (león, elefante, jirafa…)."},
-  {t:"Foto con el Largo", d:"Encuentren al Largo y sáquense una foto con él, con todo el equipo.", x:"Que estén todos y se vean bien las caras."},
-  {t:"Bicho nocturno", d:"Encuentren un insecto de noche: polilla, grillo, bicho de luz… ¡sin tocarlo!", x:"Que esté cerca de una luz o linterna."},
-  {t:"Árbol monstruo", d:"Un árbol o rama que, con la linterna, parezca un monstruo.", x:"Un integrante haciendo cara de miedo al lado."},
-  {t:"Algo que brille", d:"Algo que brille o refleje la luz: un ojo de gato, un cartel, agua, metal.", x:"Que sea algo natural (agua, ojos de animal, rocío)."},
-  {t:"Escribir con luz", d:"Muevan una linterna frente a la cámara y dibujen una figura (corazón, estrella, letra).", x:"Que se lea la inicial del equipo."},
-  {t:"Grito de equipo", d:"Todo el equipo en una foto haciendo su mejor cara de susto.", x:"Que estén todos y nadie con los ojos cerrados."},
-  {t:"Huella misteriosa", d:"Una huella en la tierra o el barro (de animal o de zapatilla).", x:"Que sea de un animal de verdad."},
-  {t:"El fogón", d:"La luz del fogón o de una fogata del campamento, siempre desde lejos y con un monitor cerca.", x:"Que se vean siluetas de personas recortadas contra el fuego."},
-  {t:"Pirámide humana", d:"El equipo formando una figura o letra con el cuerpo, iluminados con linternas.", x:"Que la figura sea un animal reconocible."}
+  {t:"Sombra de animal en movimiento", d:"Con linternas y las manos, hagan la sombra de un animal haciendo algo (comiendo, volando, peleando). Tiene que adivinarse sin explicar.", x:"Dos animales distintos en la misma sombra."},
+  {t:"Estatua de su elemento", d:"Todo el equipo, quieto como estatua, representa su elemento con el cuerpo: Fuego con llamas que suben, Agua con una ola, Tierra con una montaña o volcán. Ilumínense con linternas desde abajo.", x:"Que alguien de otro equipo adivine qué elemento es sin que se lo digan."},
+  {t:"Bicho nocturno de cerca", d:"Un insecto u otro bicho, nítido y de cerca, en el que se vean las patas o las antenas. ¡Sin tocarlo ni moverlo!", x:""},
+  {t:"Árbol con cara", d:"Encuentren un árbol que parezca tener cara y complétenla con linternas, hojas o ramitas (sin arrancar nada vivo). Un integrante al lado imita la misma cara.", x:""},
+  {t:"Tres luces de colores", d:"En una sola foto, tres fuentes de luz distintas y de tres colores diferentes.", x:""},
+  {t:"Escribir con luz", d:"Escriban FUEGO, AGUA o TIERRA con linternas, usando el modo noche o larga exposición de la cámara.", x:"Que se lea completo, sin letras al revés."},
+  {t:"Grito congelado", d:"Todo el equipo gritando, con los pies en el aire al mismo tiempo.", x:"Que nadie tenga los ojos cerrados."},
+  {t:"Rastro de un animal", d:"Una huella, nido, pluma o cáscara de verdad, con un objeto al lado para mostrar el tamaño.", x:"Escriban con ramitas o piedritas de qué animal es."},
+  {t:"Reflejo nocturno", d:"El equipo reflejado en algo (un charco, una ventana, un balde con agua, un vidrio), iluminado con una linterna.", x:"Que se vean todos los integrantes en el reflejo."},
+  {t:"Pirámide con elemento", d:"Una pirámide humana sosteniendo algo de su elemento: rojo o caliente para Fuego, agua para Agua, planta o piedra para Tierra.", x:"Por lo menos cuatro personas en la base."}
 ];
 const N = CONSIGNAS.length;
 const IN_CLAUDE = !!window.claude;              // dentro de claude.ai no se puede enviar a Drive
@@ -277,7 +277,7 @@ $("syncBtn").onclick=sendPending;
 function openSheet(i){current=i;const c=CONSIGNAS[i];
   $("shNum").textContent=`Consigna ${i+1} de ${N}`;
   $("shTitle").textContent=c.t;$("shDesc").textContent=c.d;
-  $("shExtra").innerHTML="";const b=document.createElement("b");b.textContent="Desafío extra: ";$("shExtra").append(b,c.x);
+  $("shExtra").innerHTML="";$("shExtra").hidden=!c.x;if(c.x){const b=document.createElement("b");b.textContent="Desafío extra: ";$("shExtra").append(b,c.x)}
   showPrev();$("sheetBg").hidden=false;$("shShoot").focus()}
 function showPrev(){const p=$("shPrev");const src=state.photos[current];p.innerHTML=src?'<img alt="Foto de la consigna">':"Todavía no hay foto";if(src)p.querySelector("img").src=src;$("shDel").hidden=!src;$("shShoot").textContent=src?"📷 Sacar otra":"📷 Abrir cámara"}
 function closeSheet(){$("sheetBg").hidden=true;current=null}
