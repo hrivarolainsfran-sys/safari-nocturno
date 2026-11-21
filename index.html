@@ -77,6 +77,7 @@ button:disabled{opacity:.6;cursor:default}
 .card .t strong{font-size:1rem;line-height:1.25}
 .card .t span{font-size:.82rem;color:var(--muted)}
 .card .st{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card.rej{border-color:var(--ember)}
 .card .st.ok{color:var(--leaf)} .card .st.err{color:var(--ember)} .card .st.go{color:var(--firefly)}
 .thumb{width:64px;height:64px;border-radius:10px;background:var(--panel2);border:1px dashed var(--line);display:grid;place-items:center;overflow:hidden;color:var(--muted)}
 .thumb img{width:100%;height:100%;object-fit:cover}
@@ -200,7 +201,7 @@ const CONSIGNAS = [
 const N = CONSIGNAS.length;
 const IN_CLAUDE = !!window.claude;              // dentro de claude.ai no se puede enviar a Drive
 const CLOUD = !!DRIVE_URL && !IN_CLAUDE;
-let state = {team:"", key:"", photos:{}, up:{}};
+let state = {team:"", key:"", photos:{}, up:{}, rej:{}};
 let current = null, lastErr = "";
 const $ = id => document.getElementById(id);
 
@@ -209,7 +210,7 @@ let idb = null;
 function openDB(){return new Promise(res=>{try{const r=indexedDB.open("safari-nocturno",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}catch(e){res(null)}})}
 function put(k,v){if(!idb)return;try{idb.transaction("kv","readwrite").objectStore("kv").put(v,k)}catch(e){}}
 function get(k){return new Promise(res=>{if(!idb)return res(undefined);try{const r=idb.transaction("kv").objectStore("kv").get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(undefined)}catch(e){res(undefined)}})}
-function save(){const up={};for(const k in state.up)if(state.up[k]==="ok")up[k]="ok";put("state",{team:state.team,key:state.key,up,ids:Object.keys(state.photos)})}
+function save(){const up={};for(const k in state.up)if(state.up[k]==="ok")up[k]="ok";put("state",{team:state.team,key:state.key,up,rej:state.rej,ids:Object.keys(state.photos)})}
 
 /* ---------- foto: achicar a ~1280px JPEG ---------- */
 function shrink(file){return new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const max=1280;let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.82))};img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
@@ -220,7 +221,7 @@ const ERR = {clave:"La clave del campamento no es correcta. Pedila a un monitor.
 async function sendPending(){
   if(!CLOUD||sending)return;
   if(!state.team.trim()||!state.key.trim()){renderSync();return}
-  sending=true;lastErr="";
+  sending=true;lastErr="";sendSeq++;
   for(let i=0;i<N;i++){
     if(!state.photos[i]||state.up[i]==="ok")continue;
     state.up[i]="go";render();
@@ -234,6 +235,27 @@ async function sendPending(){
   sending=false;save();render();
 }
 addEventListener("online",sendPending);
+
+/* ---------- fotos eliminadas por los monitores en el Drive ---------- */
+let sendSeq=0, checking=false;
+async function checkDrive(){
+  if(!CLOUD||sending||checking||document.hidden||!state.team.trim()||!state.key.trim())return;
+  const sent=Object.keys(state.photos).filter(i=>state.up[i]==="ok");
+  if(!sent.length)return;
+  checking=true;const seq=sendSeq;
+  try{
+    const r=await fetch(DRIVE_URL+"?team="+encodeURIComponent(state.team.trim())+"&key="+encodeURIComponent(state.key.trim()));
+    const j=await r.json();
+    if(!j.ok||!Array.isArray(j.have)||seq!==sendSeq||sending)return;   // si se envió algo mientras tanto, se revisa en la próxima vuelta
+    const gone=sent.filter(i=>state.up[i]==="ok"&&!j.have.includes(+i+1));
+    if(!gone.length)return;
+    gone.forEach(i=>{delete state.photos[i];delete state.up[i];put("photo"+i,undefined);state.rej[i]=true});
+    save();render();
+    toast(gone.length===1?`Los monitores eliminaron la foto ${+gone[0]+1}: vuelvan a sacarla.`:`Los monitores eliminaron ${gone.length} fotos: vuelvan a sacarlas.`,true);
+  }catch(e){}finally{checking=false}
+}
+setInterval(checkDrive,30000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkDrive()});
 
 /* ---------- render ---------- */
 function upLabel(i){if(!CLOUD||!state.photos[i])return["",""];const u=state.up[i];
@@ -249,11 +271,13 @@ function render(){
     const li=document.createElement("li");
     const b=document.createElement("button");
     const [cls,lab]=upLabel(i);
-    b.className="card"+(state.photos[i]?" done":"");
+    b.className="card"+(state.photos[i]?" done":"")+(state.rej[i]&&!state.photos[i]?" rej":"");
     b.innerHTML=`<div class="n">${String(i+1).padStart(2,"0")}</div><div class="t"><strong></strong><span></span><div class="st ${cls}"></div></div><div class="thumb">${state.photos[i]?'<img alt="">':"📷"}</div>`;
     b.querySelector("strong").textContent=c.t;
     b.querySelector(".t span").textContent=c.d;
-    b.querySelector(".st").textContent=state.photos[i]?(lab||"✓ Foto lista"):"";
+    const st=b.querySelector(".st");
+    if(!state.photos[i]&&state.rej[i]){st.className="st err";st.textContent="✗ Eliminada por los monitores: vuelvan a cargarla"}
+    else st.textContent=state.photos[i]?(lab||"✓ Foto lista"):"";
     if(state.photos[i])b.querySelector("img").src=state.photos[i];
     b.onclick=()=>openSheet(i);
     li.appendChild(b);ul.appendChild(li);
@@ -279,11 +303,11 @@ function openSheet(i){current=i;const c=CONSIGNAS[i];
   $("shTitle").textContent=c.t;$("shDesc").textContent=c.d;
   $("shExtra").innerHTML="";$("shExtra").hidden=!c.x;if(c.x){const b=document.createElement("b");b.textContent="Desafío extra: ";$("shExtra").append(b,c.x)}
   showPrev();$("sheetBg").hidden=false;$("shShoot").focus()}
-function showPrev(){const p=$("shPrev");const src=state.photos[current];p.innerHTML=src?'<img alt="Foto de la consigna">':"Todavía no hay foto";if(src)p.querySelector("img").src=src;$("shDel").hidden=!src;$("shShoot").textContent=src?"📷 Sacar otra":"📷 Abrir cámara"}
+function showPrev(){const p=$("shPrev");const src=state.photos[current];p.innerHTML=src?'<img alt="Foto de la consigna">':state.rej[current]?"Los monitores eliminaron esta foto porque no cumplía la consigna. Saquen otra.":"Todavía no hay foto";if(src)p.querySelector("img").src=src;$("shDel").hidden=!src;$("shShoot").textContent=src?"📷 Sacar otra":"📷 Abrir cámara"}
 function closeSheet(){$("sheetBg").hidden=true;current=null}
 async function onFile(e){const f=e.target.files&&e.target.files[0];e.target.value="";if(!f||current===null)return;
   const i=current;$("shPrev").textContent="Guardando…";
-  try{const data=await shrink(f);state.photos[i]=data;delete state.up[i];put("photo"+i,data);save();showPrev();render();toast("¡Foto guardada!");sendPending()}
+  try{const data=await shrink(f);state.photos[i]=data;delete state.up[i];delete state.rej[i];put("photo"+i,data);save();showPrev();render();toast("¡Foto guardada!");sendPending()}
   catch(err){$("shPrev").textContent="No se pudo leer la foto. Probá de nuevo o elegila de la galería."}}
 $("cam").onchange=onFile;$("gal").onchange=onFile;
 $("shShoot").onclick=()=>$("cam").click();
@@ -307,7 +331,7 @@ $("campKey").oninput=e=>{state.key=e.target.value;lastErr="";save();renderSync()
 /* ---------- reiniciar ---------- */
 $("resetBtn").onclick=()=>{$("confirmBg").hidden=false;$("cfNo").focus()};
 $("cfNo").onclick=()=>$("confirmBg").hidden=true;
-$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=state.key;state={team:"",key,photos:{},up:{}};lastErr="";showTeam();save();$("confirmBg").hidden=true;render();toast("Juego reiniciado")};
+$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=state.key;state={team:"",key,photos:{},up:{},rej:{}};lastErr="";showTeam();save();$("confirmBg").hidden=true;render();toast("Juego reiniciado")};
 
 /* ---------- descarga de la app (sólo dentro de Claude) ---------- */
 (async()=>{
@@ -341,11 +365,11 @@ $("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=s
 /* ---------- arranque ---------- */
 if(CLOUD){$("keyLabel").hidden=false;$("cloudStat").hidden=false;$("footNote").textContent="Cada foto se guarda en este celular y se envía al Drive de los monitores. Usen un celular por equipo."}
 (async()=>{render();idb=await openDB();const s=await get("state");
-  if(s){state.team=s.team||"";state.key=s.key||"";state.up=s.up||{};
+  if(s){state.team=s.team||"";state.key=s.key||"";state.up=s.up||{};state.rej=s.rej||{};
     for(const i of (s.ids||[])){const d=await get("photo"+i);if(d)state.photos[i]=d}
     if(!document.querySelector(`.tb[data-t="${state.team}"]`))state.team="";
     showTeam();$("campKey").value=state.key}
-  render();sendPending()})();
+  render();await sendPending();checkDrive()})();
 </script>
 <div class="sheet-bg" id="instBg" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="instTitle">
