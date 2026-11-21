@@ -46,15 +46,12 @@ button:disabled{opacity:.6;cursor:default}
 .team{display:flex;gap:10px;flex-wrap:wrap}
 .team label{flex:1 1 200px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .team input{background:var(--panel);border:1px solid var(--line);color:var(--moon);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box}
-.teams{flex:1 1 100%;display:flex;flex-direction:column;gap:6px;min-width:0}
-.teamBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tb{--c:var(--line);background:var(--panel);border:2px solid var(--line);color:var(--moon);border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
-.tb i{font-style:normal;font-size:1.5rem;line-height:1}
-.tb b{font-family:var(--display);font-weight:400;font-size:1.25rem;letter-spacing:.04em;line-height:1}
-.tb small{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
-.tb[data-t="Rojo (Fuego)"]{--c:#e2523c}.tb[data-t="Azul (Agua)"]{--c:#4a9be8}.tb[data-t="Verde (Tierra)"]{--c:#4fbf6a}
-.tb[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,var(--panel))}
-.tb[aria-pressed="true"] b{color:var(--c)}
+.team input#teamCode{font-family:var(--display);font-size:1.8rem;letter-spacing:.4em;text-align:center;padding:8px 12px}
+.badge{--c:var(--line);flex:1 1 100%;display:flex;align-items:center;gap:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 22%,var(--panel));border-radius:12px;padding:10px 14px}
+.badge i{font-style:normal;font-size:1.6rem;line-height:1}
+.badge b{font-family:var(--display);font-weight:400;font-size:1.4rem;letter-spacing:.04em;color:var(--c);line-height:1}
+.codeMsg{flex:1 1 100%;margin:0;font-size:.9rem;color:var(--muted)}
+.codeMsg.bad{color:var(--ember)}
 
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -117,15 +114,11 @@ footer{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-to
     </div>
   </header>
 
-  <div class="team">
-    <div class="teams" role="group" aria-labelledby="teamLbl"><span class="eyebrow" id="teamLbl">Elijan su equipo</span>
-      <div class="teamBtns" id="teamBtns">
-        <button type="button" class="tb" data-t="Rojo (Fuego)" aria-pressed="false"><i>🔥</i><b>Rojo</b><small>Fuego</small></button>
-        <button type="button" class="tb" data-t="Azul (Agua)" aria-pressed="false"><i>💧</i><b>Azul</b><small>Agua</small></button>
-        <button type="button" class="tb" data-t="Verde (Tierra)" aria-pressed="false"><i>🌱</i><b>Verde</b><small>Tierra</small></button>
-      </div></div>
-    <label for="campKey" id="keyLabel" hidden><span class="eyebrow">Clave del campamento</span>
-      <input id="campKey" placeholder="Ej: SAFARI" maxlength="30" autocomplete="off" autocapitalize="characters"></label>
+  <div class="team" id="teamBox" hidden>
+    <label for="teamCode"><span class="eyebrow">Código del equipo</span>
+      <input id="teamCode" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="····" autocomplete="off" aria-describedby="codeMsg"></label>
+    <div class="badge" id="teamBadge" hidden><i></i><div><span class="eyebrow">Su equipo</span><br><b></b></div></div>
+    <p class="codeMsg" id="codeMsg" aria-live="polite">Escriban el código de 4 números que les dio un monitor.</p>
   </div>
 
   <div class="stats">
@@ -217,7 +210,7 @@ function shrink(file){return new Promise((res,rej)=>{const img=new Image();const
 
 /* ---------- envío a Google Drive ---------- */
 let sending = false;
-const ERR = {clave:"La clave del campamento no es correcta. Pedila a un monitor.", imagen:"La foto no se pudo leer. Probá sacarla de nuevo.", grande:"La foto es demasiado pesada.", servidor:"El Drive no respondió bien. Probá de nuevo en un rato.", red:"Sin señal: las fotos se envían cuando vuelva internet."};
+const ERR = {clave:"El código del equipo no es correcto. Pídanlo a un monitor.", imagen:"La foto no se pudo leer. Probá sacarla de nuevo.", grande:"La foto es demasiado pesada.", servidor:"El Drive no respondió bien. Probá de nuevo en un rato.", red:"Sin señal: las fotos se envían cuando vuelva internet."};
 async function sendPending(){
   if(!CLOUD||sending)return;
   if(!state.team.trim()||!state.key.trim()){renderSync();return}
@@ -226,7 +219,7 @@ async function sendPending(){
     if(!state.photos[i]||state.up[i]==="ok")continue;
     state.up[i]="go";render();
     try{
-      const r=await fetch(DRIVE_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:state.key.trim(),team:state.team.trim(),n:i+1,title:CONSIGNAS[i].t,image:state.photos[i]})});
+      const r=await fetch(DRIVE_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({code:state.key.trim(),n:i+1,title:CONSIGNAS[i].t,image:state.photos[i]})});
       const j=await r.json();
       if(j.ok){state.up[i]="ok"}else{state.up[i]="err";lastErr=j.error||"servidor";if(j.error==="clave")break}
     }catch(e){state.up[i]="err";lastErr="red";break}
@@ -244,7 +237,7 @@ async function checkDrive(){
   if(!sent.length)return;
   checking=true;const seq=sendSeq;
   try{
-    const r=await fetch(DRIVE_URL+"?team="+encodeURIComponent(state.team.trim())+"&key="+encodeURIComponent(state.key.trim()));
+    const r=await fetch(DRIVE_URL+"?code="+encodeURIComponent(state.key.trim()));
     const j=await r.json();
     if(!j.ok||!Array.isArray(j.have)||seq!==sendSeq||sending)return;   // si se envió algo mientras tanto, se revisa en la próxima vuelta
     const gone=sent.filter(i=>state.up[i]==="ok"&&!j.have.includes(+i+1));
@@ -289,7 +282,7 @@ function renderSync(){
   const box=$("syncBox"),msg=$("syncMsg"),btn=$("syncBtn");
   const pend=Object.keys(state.photos).filter(i=>state.up[i]!=="ok").length;
   box.classList.remove("warn");btn.hidden=true;
-  if(!state.team.trim()||!state.key.trim()){box.hidden=false;box.classList.add("warn");msg.textContent=!state.team.trim()?"Elijan su equipo arriba para que las fotos se envíen al Drive.":"Escriban la clave del campamento para que las fotos se envíen al Drive.";return}
+  if(!state.team.trim()||!state.key.trim()){box.hidden=false;box.classList.add("warn");msg.textContent="Escriban arriba el código de su equipo para que las fotos se envíen al Drive.";return}
   if(lastErr&&pend){box.hidden=false;box.classList.add("warn");msg.textContent=ERR[lastErr]||ERR.servidor;btn.hidden=sending;return}
   if(sending){box.hidden=false;msg.textContent="Enviando fotos al Drive…";return}
   if(pend){box.hidden=false;msg.textContent=pend+" foto(s) por enviar.";btn.hidden=false;return}
@@ -320,18 +313,31 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSheet();$("con
 function toast(t,bad){const el=$("toast");el.textContent=t;el.classList.toggle("bad",!!bad);el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,2000)}
 
 /* ---------- equipo y clave ---------- */
-let typing;
-function showTeam(){document.querySelectorAll(".tb").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===state.team))}
-document.querySelectorAll(".tb").forEach(b=>b.onclick=()=>{if(state.team&&state.team!==b.dataset.t&&Object.keys(state.photos).length){
-    // cambiar de equipo con fotos ya enviadas: las pendientes van al equipo nuevo
-    for(const k in state.up)delete state.up[k];}
-  state.team=b.dataset.t;save();showTeam();render();sendPending()});
-$("campKey").oninput=e=>{state.key=e.target.value;lastErr="";save();renderSync();clearTimeout(typing);typing=setTimeout(sendPending,1200)};
+const TEAMS={"Rojo (Fuego)":["🔥","#e2523c"],"Azul (Agua)":["💧","#4a9be8"],"Verde (Tierra)":["🌱","#4fbf6a"]};
+function showTeam(){const t=TEAMS[state.team],bd=$("teamBadge");bd.hidden=!t;if(!t)return;
+  bd.style.setProperty("--c",t[1]);bd.querySelector("i").textContent=t[0];bd.querySelector("b").textContent=state.team}
+function codeMsg(t,bad){const m=$("codeMsg");m.textContent=t;m.classList.toggle("bad",!!bad);m.hidden=!t}
+let codeSeq=0;
+async function checkCode(){
+  const el=$("teamCode"),c=el.value.replace(/\D/g,"").slice(0,4);if(el.value!==c)el.value=c;
+  if(c.length<4){codeMsg(state.team?"":"Escriban el código de 4 números que les dio un monitor.");return}
+  if(c===state.key&&state.team){codeMsg("");return}
+  const seq=++codeSeq;codeMsg("Verificando código…");
+  try{
+    const j=await (await fetch(DRIVE_URL+"?code="+c)).json();
+    if(seq!==codeSeq)return;
+    if(j.ok&&j.team){
+      if(state.team&&state.team!==j.team){for(const k in state.up)delete state.up[k];state.rej={}}  // cambiaron de equipo: las fotos van al equipo nuevo
+      state.key=c;state.team=j.team;lastErr="";save();showTeam();codeMsg("");render();toast("¡Código correcto! Son "+j.team);sendPending();
+    }else codeMsg("Código incorrecto. Pídanlo a un monitor.",true);
+  }catch(e){if(seq===codeSeq)codeMsg("Sin señal: necesitan internet para validar el código.",true)}
+}
+$("teamCode").oninput=checkCode;
 
 /* ---------- reiniciar ---------- */
 $("resetBtn").onclick=()=>{$("confirmBg").hidden=false;$("cfNo").focus()};
 $("cfNo").onclick=()=>$("confirmBg").hidden=true;
-$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=state.key;state={team:"",key,photos:{},up:{},rej:{}};lastErr="";showTeam();save();$("confirmBg").hidden=true;render();toast("Juego reiniciado")};
+$("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const {key,team}=state;state={team,key,photos:{},up:{},rej:{}};lastErr="";showTeam();save();$("confirmBg").hidden=true;render();toast("Juego reiniciado")};
 
 /* ---------- descarga de la app (sólo dentro de Claude) ---------- */
 (async()=>{
@@ -363,12 +369,12 @@ $("cfYes").onclick=()=>{for(let i=0;i<N;i++)put("photo"+i,undefined);const key=s
   size();addEventListener("resize",size);requestAnimationFrame(draw)})();
 
 /* ---------- arranque ---------- */
-if(CLOUD){$("keyLabel").hidden=false;$("cloudStat").hidden=false;$("footNote").textContent="Cada foto se guarda en este celular y se envía al Drive de los monitores. Usen un celular por equipo."}
+if(CLOUD){$("teamBox").hidden=false;$("cloudStat").hidden=false;$("footNote").textContent="Cada foto se guarda en este celular y se envía al Drive de los monitores. Usen un celular por equipo."}
 (async()=>{render();idb=await openDB();const s=await get("state");
   if(s){state.team=s.team||"";state.key=s.key||"";state.up=s.up||{};state.rej=s.rej||{};
     for(const i of (s.ids||[])){const d=await get("photo"+i);if(d)state.photos[i]=d}
-    if(!document.querySelector(`.tb[data-t="${state.team}"]`))state.team="";
-    showTeam();$("campKey").value=state.key}
+    if(!/^\d{4}$/.test(state.key)||!TEAMS[state.team]){state.team="";state.key=""}   // versión anterior sin código
+    showTeam();$("teamCode").value=state.key;if(state.team)codeMsg("")}
   render();await sendPending();checkDrive()})();
 </script>
 <div class="sheet-bg" id="instBg" hidden>
